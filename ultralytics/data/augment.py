@@ -175,7 +175,7 @@ class Mosaic(BaseMixTransform):
             # Load image
             img = labels_patch['img']
             h, w = labels_patch.pop('resized_shape')
-
+            print(img.shape)
             # Place img in img4
             if i == 0:  # top left
                 img4 = np.full((s * 2, s * 2, img.shape[2]), 114, dtype=np.uint8)  # base image with 4 tiles
@@ -1103,5 +1103,12 @@ class ToTensor:
         im = np.ascontiguousarray(im.transpose((2, 0, 1))[::-1])  # HWC to CHW -> BGR to RGB -> contiguous
         im = torch.from_numpy(im)  # to torch
         im = im.half() if self.half else im.float()  # uint8 to fp16/32
-        im /= 255.0  # 0-255 to 0.0-1.0
+        # im /= 255.0  # 0-255 to 0.0-1.0
+        print("toTensor")
+        if im.dtype == np.uint8:
+            im /= 255.0
+        elif im.dtype == np.uint16:
+            im /= (2**16-1)
+        else:
+            raise ValueError
         return im
