@@ -574,12 +574,11 @@ class RandomHSV:
             hue, sat, val = cv2.split(cv2.cvtColor(img, cv2.COLOR_BGR2HSV))
             dtype = img.dtype  # uint8
 
-            x = np.arange(0, 256, dtype=r.dtype)
-            lut_hue = ((x * r[0]) % 180).astype(dtype)
-            lut_sat = np.clip(x * r[1], 0, 255).astype(dtype)
-            lut_val = np.clip(x * r[2], 0, 255).astype(dtype)
-
-            im_hsv = cv2.merge((cv2.LUT(hue, lut_hue), cv2.LUT(sat, lut_sat), cv2.LUT(val, lut_val)))
+            m = 2**16-1  # TODO: include conditional behavior for determining maximum
+            hue = (hue * r[0]) % 180
+            sat = np.clip(sat * r[1], 0, m)
+            val = np.clip(sat * r[2], 0, m)
+            im_hsv = cv2.merge((hue, sat, val))
             cv2.cvtColor(im_hsv, cv2.COLOR_HSV2BGR, dst=img)  # no return needed
         return labels
 
