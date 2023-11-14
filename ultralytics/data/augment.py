@@ -572,13 +572,16 @@ class RandomHSV:
         if self.hgain or self.sgain or self.vgain:
             r = np.random.uniform(-1, 1, 3) * [self.hgain, self.sgain, self.vgain] + 1  # random gains
             hue, sat, val = cv2.split(cv2.cvtColor(img, cv2.COLOR_BGR2HSV))
-            dtype = img.dtype  # uint8
+            # dtype = img.dtype  # uint8
+            dtype = np.uint8
 
-            m = 2**16-1  # TODO: include conditional behavior for determining maximum
-            hue = (hue * r[0]) % 180
-            sat = np.clip(sat * r[1], 0, m)
-            val = np.clip(sat * r[2], 0, m)
-            im_hsv = cv2.merge((hue, sat, val))
+            x = np.arange(0, 2**8, dtype=r.dtype)
+            lut_hue = ((x * r[0]) % 180).astype(dtype)
+            lut_sat = np.clip(x * r[1], 0, 2**8-1).astype(dtype)
+            lut_val = np.clip(x * r[2], 0, 2**8-1).astype(dtype)
+            # print(f"hue: {hue}, sat: {sat}, val: {val}")
+            # print(f"lut_hue: {lut_hue}, lut_sat: {lut_sat}, lut_val: {lut_val}")
+            im_hsv = cv2.merge((cv2.LUT(hue, lut_hue), cv2.LUT(sat, lut_sat), cv2.LUT(val, lut_val)))
             cv2.cvtColor(im_hsv, cv2.COLOR_HSV2BGR, dst=img)  # no return needed
         return labels
 
@@ -939,7 +942,7 @@ def v8_transforms(dataset, imgsz, hyp, stretch=False):
         pre_transform,
         MixUp(dataset, pre_transform=pre_transform, p=hyp.mixup),
         Albumentations(p=1.0),
-        RandomHSV(hgain=hyp.hsv_h, sgain=hyp.hsv_s, vgain=hyp.hsv_v),
+        # RandomHSV(hgain=hyp.hsv_h, sgain=hyp.hsv_s, vgain=hyp.hsv_v),
         RandomFlip(direction='vertical', p=hyp.flipud),
         RandomFlip(direction='horizontal', p=hyp.fliplr, flip_idx=flip_idx)])  # transforms
 
